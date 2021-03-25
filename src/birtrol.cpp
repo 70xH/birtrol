@@ -132,11 +132,6 @@ void max_brigthness() {
 }
 
 int main(int argc, char **argv) {
-		if (getuid()) {
-				cout << "need to be root" << endl;
-				return -1;
-		}
-
 		if (argc == 1) {
 				u_choice();
 				return 0;
