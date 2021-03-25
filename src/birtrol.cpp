@@ -7,51 +7,9 @@
 
 using namespace std;
 
-void u_choice(void);
-void help(void);
-void max_brigthness(void);
-void current_brightness(void);
-void inc(char *val);
-void dec(char *val);
-
 string dir_path = "/sys/class/backlight/amdgpu_bl1/";
 
-void u_choice() {
-		string file_path = dir_path + "brightness";
-		FILE *file = fopen(file_path.c_str(), "w+");
-
-		if (file == NULL) {
-				fprintf(stderr, "failed to read the file\n");
-				exit(-1);
-		}
-
-		char c;
-		printf("Current brightness: ");
-		while ((c = fgetc(file)) != EOF) {
-				printf("%c", c);
-		}
-
-		char ch = 'n';
-
-		printf("Change brightness (y/N): ");
-		scanf("%c", &ch);
-
-		if (ch == 'y') {
-				printf("Change the brightness to: ");
-				int num;
-				scanf("%d", &num);
-				
-				fprintf(file, "%d", num);
-		}
-
-		fclose(file);
-}
-
-void help() {
-		printf("help section\n");
-}
-
-void dec(char *val) {
+void update_brightness(char *val) {
 		string file_path = dir_path + "brightness";
 		FILE *file = fopen(file_path.c_str(), "w+");
 
@@ -60,42 +18,12 @@ void dec(char *val) {
 				exit(-1);
 		}
 
-		char c;
-		string read_num;
-
-		while ( (c = fgetc(file)) != EOF ) {
-				read_num += c;
-		}
-
-		int num = atoi(read_num.c_str()) - atoi(val);
-		fprintf(file, "%d", num);
+		fprintf(file, "%d", atoi(val));
 
 		fclose(file);
 }
 
-void inc(char *val) {
-		string file_path = dir_path + "brightness";
-		FILE *file = fopen(file_path.c_str(), "w+");
-
-		if (file == NULL) {
-				fprintf(stderr, "failed to open file\n");
-				exit(-1);
-		}
-
-		char c;
-		string read_num;
-
-		while ( (c = fgetc(file)) != EOF ) {
-				read_num += c;
-		}
-
-		int num = atoi(read_num.c_str()) + atoi(val);
-		fprintf(file, "%d", num);
-
-		fclose(file);
-}
-
-void current_brightness() {
+string current_brightness() {
 		string file_path = dir_path + "brightness";
 		FILE *file = fopen(file_path.c_str(), "r");
 
@@ -105,12 +33,36 @@ void current_brightness() {
 		}
 
 		char c;
+		string num;
 
 		while ( (c = fgetc(file)) != EOF ) {
-				printf("%c", c);
+				num += c;
 		}
 
 		fclose(file);
+		return num;
+}
+
+void u_choice() {
+		printf("Current brightness: ");
+		cout << current_brightness();
+
+		char ch = 'n';
+
+		printf("Change brightness (y/N): ");
+		scanf("%c", &ch);
+
+		if (ch == 'y') {
+				printf("Change the brightness to: ");
+				string val;
+				cin >> val;
+
+				update_brightness(strdup(val.c_str()));
+		}
+}
+
+void help() {
+		printf("help section\n");
 }
 
 void max_brigthness() {
@@ -138,8 +90,9 @@ int main(int argc, char **argv) {
 		}
 
 		int opt;
+		string val;
 
-		while ( (opt = getopt(argc, argv, "hmci:d:")) != -1 ) {
+		while ( (opt = getopt(argc, argv, "hmci:d:u:")) != -1 ) {
 				switch (opt) {
 						case 'h':
 								help();
@@ -148,13 +101,18 @@ int main(int argc, char **argv) {
 								max_brigthness();
 								break;
 						case 'c':
-								current_brightness();
+								cout << current_brightness();
+								break;
+						case 'u':
+								update_brightness(optarg);
 								break;
 						case 'i':
-								inc(optarg);
+								val = to_string(atoi(current_brightness().c_str()) + atoi(optarg));
+								update_brightness(strdup(val.c_str()));
 								break;
 						case 'd':
-								dec(optarg);
+								val = to_string(atoi(current_brightness().c_str()) - atoi(optarg));
+								update_brightness(strdup(val.c_str()));
 								break;
 						default:
 								u_choice();
